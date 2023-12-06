@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manutenção de Funcionarios</title>
+
+    <!-- Inclua o React e o ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@17.0.2/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@17.0.2/umd/react-dom.development.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+
+
+    <style>
+        /* Estilos para melhorar a usabilidade e o design */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input[type="text"] {
+            width: 50%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 16px;
+        }
+
+        .input-medium {
+            width: 50%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 16px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: gray;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        li {
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .edit-buttons {
+            margin-top: 10px;
+        }
+		
+		/* Estilo para os botões */
+		.btn-remover {
+			background-color: #ff0000; /* Cor vermelha */
+		}
+		.btn-cadastrar {
+			background-color: #ff0000; /* Cor vermelha */
+		}		
+		.btn-salvar {
+			background-color: green; /* Cor vermelha */
+		}			
+		.btn-editar {
+			background-color: #ff0000; /* Cor vermelha */
+		}		
+		.btn-remover {
+			background-color: #ff0000; /* Cor vermelha */
+		}		
+		.btn-cancelar {
+			background-color: orange; /* Cor vermelha */
+		}
+	
+    /* ... FIM - Estilos ... */
+    </style>    
+</head>
+<body>
+    <div id="root"></div>
+</body>
+<script type="text/babel">
+
+    class FuncionarioPageComponent extends React.Component {
+        
+        constructor() {
+            super();
+            this.state = {
+                funcionarios: [],
+                novoFuncionario: {
+                    nome: '',
+                    cargo: '',
+                    telefone: '',
+                    dataAdmissao: '' // Novo campo para data e hora
+                },
+                funcionarioEmEdicao: null
+            };
+        }
+
+        componentDidMount() {
+            this.fetchFuncionarios();
+        }
+
+        async fetchFuncionarios() {
+            try {
+                const response = await fetch('http://localhost:8080/v1/funcionarios');
+                if (response.ok) {
+                    const data = await response.json();
+                    this.setState({ funcionarios: data });
+                } else {
+                    console.error('Erro ao buscar os funcionarios.');
+                }
+            } catch (error) {
+                console.error('Erro ao buscar os funcionarios:', error);
+            }
+        }
+
+        async cadastrarFuncionario() {
+            try {
+                // Formate o dataAdmissao para o formato desejado
+                const formattedValue3 = this.formatarDataHora(this.state.novoFuncionario.dataAdmissao);
+                const response = await fetch('http://localhost:8080/v1/funcionarios', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ...this.state.novoFuncionario,
+                        dataAdmissao: formattedValue3
+                    }),
+                });
+                if (response.ok) {
+                    this.fetchFuncionarios();
+                    this.setState({
+                        novoFuncionario: {
+                            nome: '',
+                            cargo: '',
+                            telefone: '',
+                            dataAdmissao: ''
+                        }
+                    });
+                } else {
+                    console.error('Erro ao cadastrar o funcionario.');
+                }
+            } catch (error) {
+                console.error('Erro ao cadastrar o funcionario:', error);
+            }
+        }
+
+        async removerFuncionario(id) {
+            try {
+                const response = await fetch(`http://localhost:8080/v1/funcionarios/${id}`, {
+                    method: 'DELETE',
+                });
+                if (response.ok) {
+                    this.fetchFuncionarios();
+                } else {
+                    console.error('Erro ao remover o funcionario.');
+                }
+            } catch (error) {
+                console.error('Erro ao remover o funcionario:', error);
+            }
+        }
+
+        async editarFuncionario() {
+            try {
+                // Formate o dataAdmissao para o formato desejado
+                const formattedValue3 = this.formatarDataHora(this.state.funcionarioEmEdicao.dataAdmissao);
+                const response = await fetch(`http://localhost:8080/v1/funcionarios/${this.state.funcionarioEmEdicao.id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ...this.state.funcionarioEmEdicao,
+                        dataAdmissao: formattedValue3
+                    }),
+                });
+                if (response.ok) {
+                    this.fetchFuncionarios();
+                    this.setState({ funcionarioEmEdicao: null });
+                } else {
+                    console.error('Erro ao editar o funcionario.');
+                }
+            } catch (error) {
+                console.error('Erro ao editar o funcionario:', error);
+            }
+        }
+
+        // Função para formatar data e hora no formato "2023-01-20T20:38:12"
+        formatarDataHora(dataHora) {
+            const data = new Date(dataHora);
+            const ano = data.getFullYear();
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const dia = String(data.getDate()).padStart(2, '0');
+            const hora = String(data.getHours()).padStart(2, '0');
+            const minuto = String(data.getMinutes()).padStart(2, '0');
+            const segundo = String(data.getSeconds()).padStart(2, '0');
+            return `${ano}-${mes}-${dia}T${hora}:${minuto}:${segundo}`;
+        }
+          // Função para formatar data e hora no formato "dd/mm/yyyy hh:mm:ss"
+        formatarDataHoraPadraoBR(dataHora) {
+            const data = new Date(dataHora);
+            const dia = String(data.getDate()).padStart(2, '0');
+            const mes = String(data.getMonth() + 1).padStart(2, '0');
+            const ano = data.getFullYear();
+            const hora = String(data.getHours()).padStart(2, '0');
+            const minuto = String(data.getMinutes()).padStart(2, '0');
+            const segundo = String(data.getSeconds()).padStart(2, '0');
+            return `${dia}/${mes}/${ano} ${hora}:${minuto}:${segundo}`;
+        }
+
+        render() {
+            return (
+                <div className="container">
+                    <h1>Manutenção de Funcionarios</h1>
+                    <form>
+                        <label>
+                            Nome:
+                            <input
+                                type="text"
+                                value={this.state.novoFuncionario.nome}
+                                onChange={(e) => this.setState({ novoFuncionario: { ...this.state.novoFuncionario, nome: e.target.value } })}
+                            />
+                        </label>
+                        <br />
+                        <label>
+                            Cargo:
+                            <input
+                                type="text"
+                                value={this.state.novoFuncionario.cargo}
+                                onChange={(e) => this.setState({ novoFuncionario: { ...this.state.novoFuncionario, cargo: e.target.value } })}
+                            />
+                        </label>
+                        <br />
+                        <label>
+                            Telefone:
+                            <input
+                                type="text"
+                                value={this.state.novoFuncionario.telefone}
+                                onChange={(e) => this.setState({ novoFuncionario: { ...this.state.novoFuncionario, telefone: e.target.value } })}
+                            />
+                        </label>
+                        <br />                        
+                        <label>
+                            Data de admissão:
+                            <input
+                                type="datetime-local"  className="input-medium"
+                                value={this.state.novoFuncionario.dataAdmissao}
+                                onChange={(e) => this.setState({ novoFuncionario: { ...this.state.novoFuncionario, dataAdmissao: e.target.value } })}
+                            />
+                            (Data e Hora)
+                        </label>
+                        <br />
+                        <button type="button" onClick={() => this.cadastrarFuncionario()}>Cadastrar</button>
+                    </form>
+                    <ul>
+                        {this.state.funcionarios.map((funcionario, index) => (
+                            <li key={index}>
+                                <strong>Nome:</strong> {funcionario.nome}<br />
+                                <strong>Cargo:</strong> {funcionario.cargo}<br />
+                                <strong>Telefone:</strong> {funcionario.telefone}<br />
+                                <strong>Data de admissão (Data e Hora):</strong> {this.formatarDataHoraPadraoBR(funcionario.dataAdmissao)}<br />
+                                <div className="edit-buttons">
+                                    <button onClick={() => this.setState({ funcionarioEmEdicao: funcionario })}>Editar</button>
+                                    <span>&nbsp;</span>
+                                    <button className="btn-remover" onClick={() => this.removerFuncionario(funcionario.id)}>Remover</button>
+                                </div>
+                                {this.state.funcionarioEmEdicao && this.state.funcionarioEmEdicao.id === funcionario.id && (
+                                    <form>
+                                        <label>
+                                            Novo Nome:
+                                            <input
+                                                type="text"
+                                                value={this.state.funcionarioEmEdicao.nome}
+                                                onChange={(e) => this.setState({ funcionarioEmEdicao: { ...this.state.funcionarioEmEdicao, nome: e.target.value } })}
+                                            />
+                                        </label>
+                                        <br />
+                                        <label>
+                                            Novo Cargo:
+                                            <input
+                                                type="text"
+                                                value={this.state.funcionarioEmEdicao.cargo}
+                                                onChange={(e) => this.setState({ funcionarioEmEdicao: { ...this.state.funcionarioEmEdicao, cargo: e.target.value } })}
+                                            />
+                                        </label>
+                                        <br />
+                                        <label>
+                                            Novo Telefone:
+                                            <input
+                                                type="text"
+                                                value={this.state.funcionarioEmEdicao.telefone}
+                                                onChange={(e) => this.setState({ funcionarioEmEdicao: { ...this.state.funcionarioEmEdicao, telefone: e.target.value } })}
+                                            />
+                                        </label>
+                                        <br />                                        
+                                        <label>
+                                            Novo Data de admissão (Data e Hora):
+                                            <input
+                                                type="datetime-local"
+                                                value={this.state.funcionarioEmEdicao.dataAdmissao}
+                                                onChange={(e) => this.setState({ funcionarioEmEdicao: { ...this.state.funcionarioEmEdicao, dataAdmissao: e.target.value } })}
+                                            />
+                                        </label>
+                                        <br />
+                                        <div className="edit-buttons">
+                                            <button className="btn-salvar" type="button" onClick={() => this.editarFuncionario()}>Salvar</button>
+                                            <span>&nbsp;</span>
+                                            <button className="btn-cancelar" type="button" onClick={() => this.setState({ funcionarioEmEdicao: null })}>Cancelar</button>
+                                        </div>
+                                    </form>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            );
+        }
+    }
+
+    ReactDOM.render(<FuncionarioPageComponent />, document.getElementById('root'));
+
+</script>
+</html>
